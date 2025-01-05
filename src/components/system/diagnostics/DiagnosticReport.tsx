@@ -19,14 +19,70 @@ const DiagnosticReport = () => {
     queryFn: async () => {
       console.log('Running system diagnostics...');
       
-      // Run all diagnostic checks in parallel
-      const [roleIssuesResult, memberChecksResult, securityAuditResult] = await Promise.all([
-        supabase.rpc('audit_security_settings'),
+      // Get all members with their auth_user_id for role checks
+      const { data: members, error: membersError } = await supabase
+        .from('members')
+        .select('id, auth_user_id, member_number, full_name');
+      
+      if (membersError) throw membersError;
+
+      // Get all user roles
+      const { data: userRoles, error: rolesError } = await supabase
+        .from('user_roles')
+        .select('user_id, role');
+      
+      if (rolesError) throw rolesError;
+
+      // Get all collectors
+      const { data: collectors, error: collectorsError } = await supabase
+        .from('members_collectors')
+        .select('member_number');
+      
+      if (collectorsError) throw collectorsError;
+
+      // Process role issues
+      const roleIssues: RoleIssue[] = [];
+      members.forEach(member => {
+        if (!member.auth_user_id) {
+          roleIssues.push({
+            user_id: '',
+            member_number: member.member_number,
+            full_name: member.full_name,
+            issue_type: 'Missing Auth User',
+            details: 'Member has no associated auth user'
+          });
+        } else {
+          const memberRoles = userRoles.filter(r => r.user_id === member.auth_user_id);
+          const isCollector = collectors.some(c => c.member_number === member.member_number);
+
+          if (isCollector && !memberRoles.some(r => r.role === 'collector')) {
+            roleIssues.push({
+              user_id: member.auth_user_id,
+              member_number: member.member_number,
+              full_name: member.full_name,
+              issue_type: 'Missing Collector Role',
+              details: 'User is in collectors table but missing collector role'
+            });
+          }
+
+          if (!isCollector && memberRoles.some(r => r.role === 'collector')) {
+            roleIssues.push({
+              user_id: member.auth_user_id,
+              member_number: member.member_number,
+              full_name: member.full_name,
+              issue_type: 'Invalid Collector Role',
+              details: 'User has collector role but not in collectors table'
+            });
+          }
+        }
+      });
+
+      // Run member checks and security audit in parallel
+      const [memberChecksResult, securityAuditResult] = await Promise.all([
         supabase.rpc('check_member_numbers'),
         supabase.rpc('audit_security_settings')
       ]);
 
-      const roleIssues = roleIssuesResult.data as RoleIssue[] || [];
       const memberChecks = memberChecksResult.data as MemberIssue[] || [];
       const securityAudit = securityAuditResult.data as SecurityIssue[] || [];
 
