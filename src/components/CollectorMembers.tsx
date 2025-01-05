@@ -38,7 +38,6 @@ const CollectorMembers = ({ collectorName }: { collectorName: string }) => {
     checkAuth();
   }, []);
 
-  // Simplified query to fetch members
   const { data: members, isLoading, error } = useQuery({
     queryKey: ['collectorMembers', collectorName],
     queryFn: async () => {
@@ -57,26 +56,23 @@ const CollectorMembers = ({ collectorName }: { collectorName: string }) => {
       console.log('Members data fetched:', data);
       return data as Member[];
     },
-    enabled: !!collectorName && !!session, // Only fetch if we have both a collector name and a valid session
+    enabled: !!collectorName && !!session,
   });
 
-  // If no session, don't show loading state
   if (!session) {
     console.log('No active session, skipping member fetch');
     return null;
   }
 
-  // Basic loading state
   if (isLoading) {
     console.log('Component in loading state');
     return (
       <div className="flex justify-center items-center p-4">
-        <Loader2 className="h-6 w-6 animate-spin" />
+        <Loader2 className="h-6 w-6 animate-spin text-dashboard-accent1" />
       </div>
     );
   }
 
-  // Error handling
   if (error) {
     console.error('Component in error state:', error);
     return (
@@ -86,11 +82,10 @@ const CollectorMembers = ({ collectorName }: { collectorName: string }) => {
     );
   }
 
-  // No data state
   if (!members || members.length === 0) {
     console.log('No members found for collector:', collectorName);
     return (
-      <div className="p-4 text-gray-500">
+      <div className="p-4 text-dashboard-muted">
         No members found for collector: {collectorName}
       </div>
     );
@@ -98,18 +93,17 @@ const CollectorMembers = ({ collectorName }: { collectorName: string }) => {
 
   console.log('Rendering member list with count:', members.length);
   
-  // Simplified member list rendering
   return (
     <div className="space-y-4">
       <ul className="space-y-2">
         {members.map((member) => (
           <li 
             key={member.id}
-            className="bg-card p-4 rounded-lg border border-border"
+            className="bg-dashboard-card hover:bg-dashboard-card/80 p-4 rounded-lg border border-white/10 transition-colors duration-200"
           >
             <div>
-              <p className="font-medium">{member.full_name}</p>
-              <p className="text-sm text-muted-foreground">
+              <p className="font-medium text-white">{member.full_name}</p>
+              <p className="text-sm text-dashboard-text">
                 Member #: {member.member_number}
               </p>
             </div>
