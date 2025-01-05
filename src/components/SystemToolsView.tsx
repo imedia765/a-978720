@@ -1,33 +1,9 @@
 import { useState } from 'react';
 import { useToast } from "@/hooks/use-toast";
-import MemberNumberVerification from './system/MemberNumberVerification';
-import SecurityAudit from './system/SecurityAudit';
-import RoleManagement from './system/RoleManagement';
+import DiagnosticReport from './system/diagnostics/DiagnosticReport';
 
 const SystemToolsView = () => {
   const { toast } = useToast();
-  const [isCheckingMembers, setIsCheckingMembers] = useState(false);
-  const [isAuditingSecurity, setIsAuditingSecurity] = useState(false);
-
-  const handleCheckComplete = (success: boolean) => {
-    toast({
-      title: success ? "Member Check Complete" : "Error Checking Members",
-      description: success 
-        ? "Member number verification has been completed."
-        : "An error occurred while checking members.",
-      variant: success ? "default" : "destructive",
-    });
-  };
-
-  const handleAuditComplete = (success: boolean) => {
-    toast({
-      title: success ? "Security Audit Complete" : "Error Running Security Audit",
-      description: success 
-        ? "Security settings have been audited."
-        : "An error occurred while running the security audit.",
-      variant: success ? "default" : "destructive",
-    });
-  };
 
   return (
     <>
@@ -37,19 +13,7 @@ const SystemToolsView = () => {
       </header>
 
       <div className="space-y-8">
-        <RoleManagement />
-        
-        <MemberNumberVerification 
-          isCheckingMembers={isCheckingMembers}
-          setIsCheckingMembers={setIsCheckingMembers}
-          onCheckComplete={handleCheckComplete}
-        />
-        
-        <SecurityAudit
-          isAuditingSecurity={isAuditingSecurity}
-          setIsAuditingSecurity={setIsAuditingSecurity}
-          onAuditComplete={handleAuditComplete}
-        />
+        <DiagnosticReport />
       </div>
     </>
   );
