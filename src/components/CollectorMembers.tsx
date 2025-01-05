@@ -45,7 +45,7 @@ const CollectorMembers = ({ collectorName }: { collectorName: string }) => {
       
       const { data, error } = await supabase
         .from('members')
-        .select('*')
+        .select('id, full_name, member_number, phone, collector')
         .eq('collector', collectorName);
 
       if (error) {
