@@ -9,6 +9,9 @@ import {
 } from "@/components/ui/alert";
 import { useState } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import type { Database } from '@/integrations/supabase/types';
+
+type AppRole = Database['public']['Enums']['app_role'];
 
 interface RoleIssue {
   user_id: string;
@@ -108,7 +111,7 @@ const RoleManagement = () => {
     enabled: false
   });
 
-  const handleRoleChange = async (userId: string, newRole: string) => {
+  const handleRoleChange = async (userId: string, newRole: AppRole) => {
     try {
       // First delete existing role
       const { error: deleteError } = await supabase
@@ -175,7 +178,7 @@ const RoleManagement = () => {
                   <p>{issue.details}</p>
                   {issue.user_id && (
                     <div className="mt-4">
-                      <Select onValueChange={(value) => handleRoleChange(issue.user_id, value)}>
+                      <Select onValueChange={(value: AppRole) => handleRoleChange(issue.user_id, value)}>
                         <SelectTrigger className="w-[200px]">
                           <SelectValue placeholder="Change Role" />
                         </SelectTrigger>
