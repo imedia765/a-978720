@@ -8,7 +8,6 @@ import { useAuthSession } from "@/hooks/useAuthSession";
 const CollectorMembers = ({ collectorName }: { collectorName: string }) => {
   const { session } = useAuthSession();
 
-  // Log authentication and role information for debugging
   useEffect(() => {
     const checkAuth = async () => {
       console.log('Checking authentication and roles...');
@@ -102,11 +101,13 @@ const CollectorMembers = ({ collectorName }: { collectorName: string }) => {
             className="bg-dashboard-card hover:bg-dashboard-card/80 p-4 rounded-lg border border-white/10 transition-colors duration-200"
           >
             <div className="space-y-2">
-              <p className="font-medium text-white">{member.full_name}</p>
+              <p className="font-medium text-white">{member.full_name || 'No name provided'}</p>
               <div className="flex flex-col gap-1">
                 <p className="text-sm">
                   <span className="text-dashboard-muted">Member #: </span>
-                  <span className="text-dashboard-accent1 font-medium">{member.member_number}</span>
+                  <span className="text-dashboard-accent1 font-medium">
+                    {member.member_number || 'N/A'}
+                  </span>
                 </p>
                 {member.phone && (
                   <p className="text-sm flex items-center gap-1">
