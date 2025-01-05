@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import MemberNumberVerification from './system/MemberNumberVerification';
 import SecurityAudit from './system/SecurityAudit';
+import RoleManagement from './system/RoleManagement';
 
 const SystemToolsView = () => {
   const { toast } = useToast();
@@ -36,6 +37,8 @@ const SystemToolsView = () => {
       </header>
 
       <div className="space-y-8">
+        <RoleManagement />
+        
         <MemberNumberVerification 
           isCheckingMembers={isCheckingMembers}
           setIsCheckingMembers={setIsCheckingMembers}
