@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from "@/integrations/supabase/client";
 import { Member } from "@/types/member";
-import { Loader2 } from "lucide-react";
+import { Loader2, Phone } from "lucide-react";
 import { useAuthSession } from "@/hooks/useAuthSession";
 
 const CollectorMembers = ({ collectorName }: { collectorName: string }) => {
@@ -101,11 +101,20 @@ const CollectorMembers = ({ collectorName }: { collectorName: string }) => {
             key={member.id}
             className="bg-dashboard-card hover:bg-dashboard-card/80 p-4 rounded-lg border border-white/10 transition-colors duration-200"
           >
-            <div>
+            <div className="space-y-2">
               <p className="font-medium text-white">{member.full_name}</p>
-              <p className="text-sm text-dashboard-text">
-                Member #: {member.member_number}
-              </p>
+              <div className="flex flex-col gap-1">
+                <p className="text-sm">
+                  <span className="text-dashboard-muted">Member #: </span>
+                  <span className="text-dashboard-accent1 font-medium">{member.member_number}</span>
+                </p>
+                {member.phone && (
+                  <p className="text-sm flex items-center gap-1">
+                    <Phone className="h-3 w-3 text-dashboard-accent2" />
+                    <span className="text-dashboard-text">{member.phone}</span>
+                  </p>
+                )}
+              </div>
             </div>
           </li>
         ))}
