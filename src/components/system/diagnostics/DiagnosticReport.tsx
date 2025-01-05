@@ -6,15 +6,9 @@ import { useState } from 'react';
 import RoleIssueAlert from './RoleIssueAlert';
 import type { Database } from '@/integrations/supabase/types';
 import { useToast } from "@/hooks/use-toast";
+import type { DiagnosticResult, RoleIssue, MemberIssue, SecurityIssue } from '@/types/diagnostics';
 
 type AppRole = Database['public']['Enums']['app_role'];
-
-interface DiagnosticResult {
-  timestamp: string;
-  category: string;
-  findings: any[];
-  status: 'success' | 'warning' | 'error';
-}
 
 const DiagnosticReport = () => {
   const [isGenerating, setIsGenerating] = useState(false);
@@ -26,30 +20,34 @@ const DiagnosticReport = () => {
       console.log('Running system diagnostics...');
       
       // Run all diagnostic checks in parallel
-      const [roleIssues, memberChecks, securityAudit] = await Promise.all([
-        supabase.rpc('check_role_inconsistencies'),
+      const [roleIssuesResult, memberChecksResult, securityAuditResult] = await Promise.all([
+        supabase.rpc('audit_security_settings'),
         supabase.rpc('check_member_numbers'),
-        supabase.rpc('check_security_settings')
+        supabase.rpc('audit_security_settings')
       ]);
+
+      const roleIssues = roleIssuesResult.data as RoleIssue[] || [];
+      const memberChecks = memberChecksResult.data as MemberIssue[] || [];
+      const securityAudit = securityAuditResult.data as SecurityIssue[] || [];
 
       const results: DiagnosticResult[] = [
         {
           timestamp: new Date().toISOString(),
           category: 'Role Management',
-          findings: roleIssues.data || [],
-          status: roleIssues.data?.length ? 'warning' : 'success'
+          findings: roleIssues,
+          status: roleIssues.length ? 'warning' : 'success'
         },
         {
           timestamp: new Date().toISOString(),
           category: 'Member Verification',
-          findings: memberChecks.data || [],
-          status: memberChecks.data?.length ? 'warning' : 'success'
+          findings: memberChecks,
+          status: memberChecks.length ? 'warning' : 'success'
         },
         {
           timestamp: new Date().toISOString(),
           category: 'Security Audit',
-          findings: securityAudit.data || [],
-          status: securityAudit.data?.length ? 'warning' : 'success'
+          findings: securityAudit,
+          status: securityAudit.length ? 'warning' : 'success'
         }
       ];
 
