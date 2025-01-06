@@ -10,21 +10,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import SystemCheckProgress from './system/SystemCheckProgress';
 import SystemCheckResults from './system/SystemCheckResults';
-import { generateMembersPDF } from '@/utils/pdfGenerator';
-
-interface SystemCheck {
-  check_type: string;
-  status: string;
-  details: any;
-}
-
-interface MemberNumberCheck {
-  issue_type: string;
-  description: string;
-  affected_table: string;
-  member_number: string;
-  details: any;
-}
+import { generateSystemCheckPDF } from '@/utils/systemPdfGenerator';
+import { SystemCheck } from '@/types/system';
 
 type CheckFunction = 'audit_security_settings' | 'check_member_numbers' | 'validate_user_roles';
 
@@ -92,20 +79,22 @@ const SystemToolsView = () => {
       return;
     }
 
-    const doc = generateMembersPDF(
-      systemChecks.map(check => ({
-        member_number: check.check_type,
-        full_name: check.status,
-        collector: JSON.stringify(check.details),
-      })),
-      "System Health Check Report"
-    );
-    doc.save("system-health-report.pdf");
-    
-    toast({
-      title: "PDF Generated",
-      description: "System health report has been downloaded",
-    });
+    try {
+      const doc = generateSystemCheckPDF(systemChecks, "System Health Check Report");
+      doc.save("system-health-report.pdf");
+      
+      toast({
+        title: "PDF Generated",
+        description: "System health report has been downloaded",
+      });
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast({
+        title: "Error",
+        description: "Failed to generate PDF report",
+        variant: "destructive",
+      });
+    }
   };
 
   const runSystemChecks = async () => {
