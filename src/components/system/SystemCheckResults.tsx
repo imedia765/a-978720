@@ -1,8 +1,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { AlertTriangle, CheckCircle2, Info, XCircle } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Info, XCircle, UserCheck, Shield, Key, Database } from "lucide-react";
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 interface SystemCheck {
   check_type: string;
@@ -15,7 +17,8 @@ interface SystemCheckResultsProps {
 }
 
 const SystemCheckResults = ({ checks }: SystemCheckResultsProps) => {
-  // Query to fetch member names
+  const { toast } = useToast();
+  
   const { data: memberNames } = useQuery({
     queryKey: ['member-names'],
     queryFn: async () => {
@@ -59,7 +62,6 @@ const SystemCheckResults = ({ checks }: SystemCheckResultsProps) => {
   };
 
   const formatDetails = (checkType: string, details: any) => {
-    // Handle collector role issues
     if (checkType === 'Collectors Without Role' && Array.isArray(details)) {
       return (
         <Table className="border-collapse">
@@ -87,7 +89,6 @@ const SystemCheckResults = ({ checks }: SystemCheckResultsProps) => {
       );
     }
 
-    // Handle multiple roles
     if (checkType === 'Multiple Roles Assigned') {
       return (
         <Table className="border-collapse">
@@ -136,7 +137,6 @@ const SystemCheckResults = ({ checks }: SystemCheckResultsProps) => {
       );
     }
 
-    // Default formatting for other types of details
     if (typeof details === 'string') return details;
     return Object.entries(details).map(([key, value]) => (
       <div key={key} className="mb-1">
@@ -146,7 +146,6 @@ const SystemCheckResults = ({ checks }: SystemCheckResultsProps) => {
     ));
   };
 
-  // Group checks by check_type
   const groupedChecks = checks.reduce((acc: { [key: string]: SystemCheck[] }, check) => {
     if (!acc[check.check_type]) {
       acc[check.check_type] = [];
@@ -154,6 +153,98 @@ const SystemCheckResults = ({ checks }: SystemCheckResultsProps) => {
     acc[check.check_type].push(check);
     return acc;
   }, {});
+
+  const handleFix = async (checkType: string, details: any) => {
+    try {
+      let functionName = '';
+      
+      switch (checkType) {
+        case 'Multiple Roles Assigned':
+          functionName = 'fix_multiple_roles';
+          break;
+        case 'Collectors Without Role':
+          functionName = 'assign_collector_role';
+          break;
+        case 'Security Settings':
+          functionName = 'fix_security_settings';
+          break;
+        default:
+          toast({
+            title: "Action Not Available",
+            description: "No automatic fix is available for this issue.",
+            variant: "destructive",
+          });
+          return;
+      }
+
+      const { data, error } = await supabase.rpc(functionName, { issue_details: details });
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Fix Applied",
+        description: `Successfully resolved ${checkType} issue`,
+      });
+    } catch (error) {
+      console.error('Fix error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to apply fix. Please try again or contact support.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const getActionButton = (checkType: string, details: any) => {
+    switch (checkType) {
+      case 'Multiple Roles Assigned':
+        return (
+          <Button 
+            onClick={() => handleFix(checkType, details)}
+            size="sm"
+            className="bg-blue-500 hover:bg-blue-600"
+          >
+            <UserCheck className="w-4 h-4 mr-2" />
+            Fix Roles
+          </Button>
+        );
+      case 'Collectors Without Role':
+        return (
+          <Button 
+            onClick={() => handleFix(checkType, details)}
+            size="sm"
+            className="bg-green-500 hover:bg-green-600"
+          >
+            <Key className="w-4 h-4 mr-2" />
+            Assign Role
+          </Button>
+        );
+      case 'Security Settings':
+        return (
+          <Button 
+            onClick={() => handleFix(checkType, details)}
+            size="sm"
+            className="bg-purple-500 hover:bg-purple-600"
+          >
+            <Shield className="w-4 h-4 mr-2" />
+            Fix Security
+          </Button>
+        );
+      case 'Member Number Issues':
+        return (
+          <Button 
+            onClick={() => handleFix(checkType, details)}
+            size="sm"
+            className="bg-orange-500 hover:bg-orange-600"
+          >
+            <Database className="w-4 h-4 mr-2" />
+            Fix Numbers
+          </Button>
+        );
+      default:
+        return null;
+    }
+  };
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -163,14 +254,17 @@ const SystemCheckResults = ({ checks }: SystemCheckResultsProps) => {
           className={`border ${getStatusColor(checksOfType[0].status)} bg-dashboard-card/50`}
         >
           <CardHeader className="pb-2">
-            <div className="flex items-center gap-2">
-              {getStatusIcon(checksOfType[0].status)}
-              <CardTitle className="text-lg">
-                {checkType}
-                <span className={`ml-2 px-2 py-0.5 rounded-full text-xs ${getStatusColor(checksOfType[0].status)}`}>
-                  {checksOfType[0].status}
-                </span>
-              </CardTitle>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                {getStatusIcon(checksOfType[0].status)}
+                <CardTitle className="text-lg">
+                  {checkType}
+                  <span className={`ml-2 px-2 py-0.5 rounded-full text-xs ${getStatusColor(checksOfType[0].status)}`}>
+                    {checksOfType[0].status}
+                  </span>
+                </CardTitle>
+              </div>
+              {getActionButton(checkType, checksOfType[0].details)}
             </div>
           </CardHeader>
           <CardContent className="pt-2">
