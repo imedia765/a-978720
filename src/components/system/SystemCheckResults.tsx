@@ -67,19 +67,21 @@ const SystemCheckResults = ({ checks }: SystemCheckResultsProps) => {
     }
 
     try {
-      const { data, error } = await supabase.rpc(functionName, { issue_details: details });
+      const { data, error } = await supabase.rpc(functionName, { 
+        issue_details: details 
+      });
       
       if (error) throw error;
       
       toast({
         title: "Fix Applied",
-        description: `Successfully resolved ${checkType} issue`,
+        description: data || `Successfully resolved ${checkType} issue`,
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Fix error:', error);
       toast({
         title: "Error",
-        description: "Failed to apply fix. Please try again or contact support.",
+        description: error.message || "Failed to apply fix. Please try again or contact support.",
         variant: "destructive",
       });
     }

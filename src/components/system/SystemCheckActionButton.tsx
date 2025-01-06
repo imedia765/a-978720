@@ -8,11 +8,21 @@ interface SystemCheckActionButtonProps {
 }
 
 export const SystemCheckActionButton = ({ checkType, details, onFix }: SystemCheckActionButtonProps) => {
+  const handleFix = async () => {
+    // Prepare the details in the correct format for the RPC function
+    const formattedDetails = {
+      user_id: details.user_id,
+      ...details
+    };
+    
+    await onFix(checkType, formattedDetails);
+  };
+
   switch (checkType) {
     case 'Multiple Roles Assigned':
       return (
         <Button 
-          onClick={() => onFix(checkType, details)}
+          onClick={handleFix}
           size="sm"
           className="bg-blue-500 hover:bg-blue-600"
         >
@@ -23,7 +33,7 @@ export const SystemCheckActionButton = ({ checkType, details, onFix }: SystemChe
     case 'Collectors Without Role':
       return (
         <Button 
-          onClick={() => onFix(checkType, details)}
+          onClick={handleFix}
           size="sm"
           className="bg-green-500 hover:bg-green-600"
         >
@@ -34,7 +44,7 @@ export const SystemCheckActionButton = ({ checkType, details, onFix }: SystemChe
     case 'Security Settings':
       return (
         <Button 
-          onClick={() => onFix(checkType, details)}
+          onClick={handleFix}
           size="sm"
           className="bg-purple-500 hover:bg-purple-600"
         >
@@ -45,7 +55,7 @@ export const SystemCheckActionButton = ({ checkType, details, onFix }: SystemChe
     case 'Member Number Issues':
       return (
         <Button 
-          onClick={() => onFix(checkType, details)}
+          onClick={handleFix}
           size="sm"
           className="bg-orange-500 hover:bg-orange-600"
         >
