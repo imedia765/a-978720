@@ -6,6 +6,14 @@ export interface SystemCheck {
   details: any;
 }
 
+export interface MemberNumberCheck {
+  issue_type: string;
+  description: string;
+  affected_table: string;
+  member_number: string;
+  details: any;
+}
+
 export interface SystemCheckReport {
   title: string;
   description: string;

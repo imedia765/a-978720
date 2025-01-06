@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import SystemCheckProgress from './system/SystemCheckProgress';
 import SystemCheckResults from './system/SystemCheckResults';
 import { generateSystemCheckPDF } from '@/utils/systemPdfGenerator';
-import { SystemCheck } from '@/types/system';
+import { SystemCheck, MemberNumberCheck } from '@/types/system';
 
 type CheckFunction = 'audit_security_settings' | 'check_member_numbers' | 'validate_user_roles';
 
