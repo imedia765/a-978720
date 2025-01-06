@@ -7,10 +7,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Shield, Users } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Database } from "@/integrations/supabase/types";
 
-interface UserRole {
+type UserRole = {
   user_id: string;
-  role: string;
+  role: Database['public']['Enums']['app_role'];
   full_name: string;
   member_number: string;
 }
@@ -49,7 +50,7 @@ const RoleManagementCard = () => {
     }
   });
 
-  const handleRoleChange = async (userId: string, newRole: string) => {
+  const handleRoleChange = async (userId: string, newRole: Database['public']['Enums']['app_role']) => {
     try {
       // First remove existing roles
       const { error: deleteError } = await supabase
@@ -109,7 +110,7 @@ const RoleManagementCard = () => {
                 </div>
                 <Select
                   value={user.roles?.[0] || 'member'}
-                  onValueChange={(value) => handleRoleChange(user.user_id, value)}
+                  onValueChange={(value: Database['public']['Enums']['app_role']) => handleRoleChange(user.user_id, value)}
                 >
                   <SelectTrigger className="w-[140px] bg-dashboard-card border-dashboard-accent1/20">
                     <SelectValue />
