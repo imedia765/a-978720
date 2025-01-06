@@ -3,13 +3,14 @@ import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from "@/integrations/supabase/client";
-import { Shield, Info } from 'lucide-react';
+import { Shield, Info, FileDown, Trash2 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import SystemCheckProgress from './system/SystemCheckProgress';
 import SystemCheckResults from './system/SystemCheckResults';
+import { generateMembersPDF } from '@/utils/pdfGenerator';
 
 interface SystemCheck {
   check_type: string;
@@ -72,6 +73,40 @@ const SystemToolsView = () => {
   }, [queryClient, toast, navigate]);
 
   const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+  const clearResults = () => {
+    setSystemChecks([]);
+    toast({
+      title: "Results Cleared",
+      description: "System check results have been cleared",
+    });
+  };
+
+  const generatePDFReport = () => {
+    if (systemChecks.length === 0) {
+      toast({
+        title: "No Results",
+        description: "Run system checks first to generate a PDF report",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const doc = generateMembersPDF(
+      systemChecks.map(check => ({
+        member_number: check.check_type,
+        full_name: check.status,
+        collector: JSON.stringify(check.details),
+      })),
+      "System Health Check Report"
+    );
+    doc.save("system-health-report.pdf");
+    
+    toast({
+      title: "PDF Generated",
+      description: "System health report has been downloaded",
+    });
+  };
 
   const runSystemChecks = async () => {
     console.log('Starting system checks...');
@@ -140,13 +175,33 @@ const SystemToolsView = () => {
               <Shield className="w-5 h-5 text-dashboard-accent1" />
               <CardTitle className="text-xl text-white">System Health Check</CardTitle>
             </div>
-            <Button 
-              onClick={runSystemChecks}
-              disabled={isRunningChecks}
-              className="bg-dashboard-accent1 hover:bg-dashboard-accent1/80"
-            >
-              Run System Checks
-            </Button>
+            <div className="flex gap-2">
+              <Button 
+                onClick={clearResults}
+                variant="outline"
+                className="border-dashboard-accent1/20 hover:bg-dashboard-accent1/10"
+                disabled={isRunningChecks || systemChecks.length === 0}
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Clear Results
+              </Button>
+              <Button 
+                onClick={generatePDFReport}
+                variant="outline"
+                className="border-dashboard-accent1/20 hover:bg-dashboard-accent1/10"
+                disabled={isRunningChecks || systemChecks.length === 0}
+              >
+                <FileDown className="w-4 h-4 mr-2" />
+                Export PDF
+              </Button>
+              <Button 
+                onClick={runSystemChecks}
+                disabled={isRunningChecks}
+                className="bg-dashboard-accent1 hover:bg-dashboard-accent1/80"
+              >
+                Run System Checks
+              </Button>
+            </div>
           </div>
           <CardDescription className="text-dashboard-muted">
             Comprehensive system analysis and security audit
@@ -170,12 +225,12 @@ const SystemToolsView = () => {
                 <CardHeader>
                   <div className="flex items-center gap-2">
                     <Info className="h-5 w-5 text-dashboard-accent1" />
-                    <CardTitle>No Issues Found</CardTitle>
+                    <CardTitle className="text-dashboard-accent1">No Issues Found</CardTitle>
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-dashboard-text">
-                    All system checks passed successfully.
+                  <p className="text-dashboard-accent1/80">
+                    All system checks passed successfully. Your system is healthy and secure.
                   </p>
                 </CardContent>
               </Card>
