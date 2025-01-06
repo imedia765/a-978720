@@ -1,4 +1,5 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 
 interface SystemCheckDetailsTableProps {
   checkType: string;
@@ -14,6 +15,7 @@ export const SystemCheckDetailsTable = ({ checkType, details, memberNames }: Sys
           <TableRow className="border-b border-white/10">
             <TableHead className="py-2">Collector Name</TableHead>
             <TableHead className="py-2">Member Number</TableHead>
+            <TableHead className="py-2">Table</TableHead>
             <TableHead className="py-2">Status</TableHead>
           </TableRow>
         </TableHeader>
@@ -22,10 +24,9 @@ export const SystemCheckDetailsTable = ({ checkType, details, memberNames }: Sys
             <TableRow key={index} className="border-b border-white/5 hover:bg-dashboard-card/80">
               <TableCell className="py-1.5">{item.collector_name}</TableCell>
               <TableCell className="py-1.5">{item.member_number || 'Not Assigned'}</TableCell>
+              <TableCell className="py-1.5 text-xs">members_collectors</TableCell>
               <TableCell className="py-1.5">
-                <span className="px-2 py-0.5 rounded-full text-xs bg-yellow-500/10 text-yellow-500">
-                  Warning
-                </span>
+                <Badge variant="warning">Missing Role</Badge>
               </TableCell>
             </TableRow>
           ))}
@@ -41,7 +42,8 @@ export const SystemCheckDetailsTable = ({ checkType, details, memberNames }: Sys
           <TableRow className="border-b border-white/10">
             <TableHead className="py-2">Member Name</TableHead>
             <TableHead className="py-2">User ID</TableHead>
-            <TableHead className="py-2">Roles</TableHead>
+            <TableHead className="py-2">Current Roles</TableHead>
+            <TableHead className="py-2">Source Table</TableHead>
             <TableHead className="py-2">Created</TableHead>
           </TableRow>
         </TableHeader>
@@ -52,7 +54,16 @@ export const SystemCheckDetailsTable = ({ checkType, details, memberNames }: Sys
                 {memberNames?.[item.user_id] || 'Unknown Member'}
               </TableCell>
               <TableCell className="py-1.5 text-xs">{item.user_id}</TableCell>
-              <TableCell className="py-1.5">{Array.isArray(item.roles) ? item.roles.join(', ') : item.roles}</TableCell>
+              <TableCell className="py-1.5">
+                {Array.isArray(item.roles) ? item.roles.map((role: string, idx: number) => (
+                  <Badge key={idx} variant="outline" className="mr-1">
+                    {role}
+                  </Badge>
+                )) : (
+                  <Badge variant="outline">{item.roles}</Badge>
+                )}
+              </TableCell>
+              <TableCell className="py-1.5 text-xs">user_roles</TableCell>
               <TableCell className="py-1.5 text-xs">
                 {Array.isArray(item.created_at) 
                   ? item.created_at.map((date: string) => 
@@ -63,7 +74,7 @@ export const SystemCheckDetailsTable = ({ checkType, details, memberNames }: Sys
             </TableRow>
           )) : (
             <TableRow className="border-b border-white/5">
-              <TableCell colSpan={4} className="py-1.5 text-center">No data available</TableCell>
+              <TableCell colSpan={5} className="py-1.5 text-center">No data available</TableCell>
             </TableRow>
           )}
         </TableBody>
