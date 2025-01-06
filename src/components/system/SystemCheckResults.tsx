@@ -1,10 +1,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { AlertTriangle, CheckCircle2, Info, XCircle, UserCheck, Shield, Key, Database } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Info, XCircle } from "lucide-react";
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { getStatusColor, getStatusIcon } from "./utils/systemCheckUtils";
+import { SystemCheckDetailsTable } from "./SystemCheckDetailsTable";
+import { SystemCheckActionButton } from "./SystemCheckActionButton";
 
 interface SystemCheck {
   check_type: string;
@@ -34,125 +35,6 @@ const SystemCheckResults = ({ checks }: SystemCheckResultsProps) => {
       }, {});
     }
   });
-
-  const getStatusIcon = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'critical':
-        return <XCircle className="h-5 w-5 text-red-500" />;
-      case 'warning':
-        return <AlertTriangle className="h-5 w-5 text-yellow-500" />;
-      case 'success':
-        return <CheckCircle2 className="h-5 w-5 text-green-500" />;
-      default:
-        return <Info className="h-5 w-5 text-blue-500" />;
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'critical':
-        return 'bg-red-500/10 text-red-500 border-red-500/20';
-      case 'warning':
-        return 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20';
-      case 'success':
-        return 'bg-green-500/10 text-green-500 border-green-500/20';
-      default:
-        return 'bg-blue-500/10 text-blue-500 border-blue-500/20';
-    }
-  };
-
-  const formatDetails = (checkType: string, details: any) => {
-    if (checkType === 'Collectors Without Role' && Array.isArray(details)) {
-      return (
-        <Table className="border-collapse">
-          <TableHeader className="bg-dashboard-card/50">
-            <TableRow className="border-b border-white/10">
-              <TableHead className="py-2">Collector Name</TableHead>
-              <TableHead className="py-2">Member Number</TableHead>
-              <TableHead className="py-2">Status</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {details.map((item: any, index: number) => (
-              <TableRow key={index} className="border-b border-white/5 hover:bg-dashboard-card/80">
-                <TableCell className="py-1.5">{item.collector_name}</TableCell>
-                <TableCell className="py-1.5">{item.member_number || 'Not Assigned'}</TableCell>
-                <TableCell className="py-1.5">
-                  <span className="px-2 py-0.5 rounded-full text-xs bg-yellow-500/10 text-yellow-500">
-                    Warning
-                  </span>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      );
-    }
-
-    if (checkType === 'Multiple Roles Assigned') {
-      return (
-        <Table className="border-collapse">
-          <TableHeader className="bg-dashboard-card/50">
-            <TableRow className="border-b border-white/10">
-              <TableHead className="py-2">Member Name</TableHead>
-              <TableHead className="py-2">User ID</TableHead>
-              <TableHead className="py-2">Roles</TableHead>
-              <TableHead className="py-2">Created</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {Array.isArray(details) ? details.map((item: any, index: number) => (
-              <TableRow key={index} className="border-b border-white/5 hover:bg-dashboard-card/80">
-                <TableCell className="py-1.5 text-dashboard-accent1 font-medium">
-                  {memberNames?.[item.user_id] || 'Unknown Member'}
-                </TableCell>
-                <TableCell className="py-1.5 text-xs">{item.user_id}</TableCell>
-                <TableCell className="py-1.5">{Array.isArray(item.roles) ? item.roles.join(', ') : item.roles}</TableCell>
-                <TableCell className="py-1.5 text-xs">
-                  {Array.isArray(item.created_at) 
-                    ? item.created_at.map((date: string) => 
-                        new Date(date).toLocaleDateString()
-                      ).join(', ')
-                    : new Date(item.created_at).toLocaleDateString()}
-                </TableCell>
-              </TableRow>
-            )) : (
-              <TableRow className="border-b border-white/5">
-                <TableCell className="py-1.5 text-dashboard-accent1 font-medium">
-                  {memberNames?.[details.user_id] || 'Unknown Member'}
-                </TableCell>
-                <TableCell className="py-1.5 text-xs">{details.user_id}</TableCell>
-                <TableCell className="py-1.5">{Array.isArray(details.roles) ? details.roles.join(', ') : details.roles}</TableCell>
-                <TableCell className="py-1.5 text-xs">
-                  {Array.isArray(details.created_at) 
-                    ? details.created_at.map((date: string) => 
-                        new Date(date).toLocaleDateString()
-                      ).join(', ')
-                    : new Date(details.created_at).toLocaleDateString()}
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      );
-    }
-
-    if (typeof details === 'string') return details;
-    return Object.entries(details).map(([key, value]) => (
-      <div key={key} className="mb-1">
-        <span className="font-medium text-dashboard-accent1">{key}:</span>{' '}
-        <span className="text-dashboard-text">{JSON.stringify(value, null, 2)}</span>
-      </div>
-    ));
-  };
-
-  const groupedChecks = checks.reduce((acc: { [key: string]: SystemCheck[] }, check) => {
-    if (!acc[check.check_type]) {
-      acc[check.check_type] = [];
-    }
-    acc[check.check_type].push(check);
-    return acc;
-  }, {});
 
   const handleFix = async (checkType: string, details: any) => {
     try {
@@ -195,54 +77,24 @@ const SystemCheckResults = ({ checks }: SystemCheckResultsProps) => {
     }
   };
 
-  const getActionButton = (checkType: string, details: any) => {
-    switch (checkType) {
-      case 'Multiple Roles Assigned':
-        return (
-          <Button 
-            onClick={() => handleFix(checkType, details)}
-            size="sm"
-            className="bg-blue-500 hover:bg-blue-600"
-          >
-            <UserCheck className="w-4 h-4 mr-2" />
-            Fix Roles
-          </Button>
-        );
-      case 'Collectors Without Role':
-        return (
-          <Button 
-            onClick={() => handleFix(checkType, details)}
-            size="sm"
-            className="bg-green-500 hover:bg-green-600"
-          >
-            <Key className="w-4 h-4 mr-2" />
-            Assign Role
-          </Button>
-        );
-      case 'Security Settings':
-        return (
-          <Button 
-            onClick={() => handleFix(checkType, details)}
-            size="sm"
-            className="bg-purple-500 hover:bg-purple-600"
-          >
-            <Shield className="w-4 h-4 mr-2" />
-            Fix Security
-          </Button>
-        );
-      case 'Member Number Issues':
-        return (
-          <Button 
-            onClick={() => handleFix(checkType, details)}
-            size="sm"
-            className="bg-orange-500 hover:bg-orange-600"
-          >
-            <Database className="w-4 h-4 mr-2" />
-            Fix Numbers
-          </Button>
-        );
+  const groupedChecks = checks.reduce((acc: { [key: string]: SystemCheck[] }, check) => {
+    if (!acc[check.check_type]) {
+      acc[check.check_type] = [];
+    }
+    acc[check.check_type].push(check);
+    return acc;
+  }, {});
+
+  const getIconComponent = (iconName: string) => {
+    switch (iconName) {
+      case 'XCircle':
+        return <XCircle className="h-5 w-5 text-red-500" />;
+      case 'AlertTriangle':
+        return <AlertTriangle className="h-5 w-5 text-yellow-500" />;
+      case 'CheckCircle2':
+        return <CheckCircle2 className="h-5 w-5 text-green-500" />;
       default:
-        return null;
+        return <Info className="h-5 w-5 text-blue-500" />;
     }
   };
 
@@ -256,7 +108,7 @@ const SystemCheckResults = ({ checks }: SystemCheckResultsProps) => {
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                {getStatusIcon(checksOfType[0].status)}
+                {getIconComponent(getStatusIcon(checksOfType[0].status))}
                 <CardTitle className="text-lg">
                   {checkType}
                   <span className={`ml-2 px-2 py-0.5 rounded-full text-xs ${getStatusColor(checksOfType[0].status)}`}>
@@ -264,12 +116,20 @@ const SystemCheckResults = ({ checks }: SystemCheckResultsProps) => {
                   </span>
                 </CardTitle>
               </div>
-              {getActionButton(checkType, checksOfType[0].details)}
+              <SystemCheckActionButton 
+                checkType={checkType}
+                details={checksOfType[0].details}
+                onFix={handleFix}
+              />
             </div>
           </CardHeader>
           <CardContent className="pt-2">
             <div className="text-sm">
-              {formatDetails(checkType, checksOfType.length === 1 ? checksOfType[0].details : checksOfType.map(c => c.details))}
+              <SystemCheckDetailsTable 
+                checkType={checkType}
+                details={checksOfType.length === 1 ? checksOfType[0].details : checksOfType.map(c => c.details)}
+                memberNames={memberNames}
+              />
             </div>
           </CardContent>
         </Card>

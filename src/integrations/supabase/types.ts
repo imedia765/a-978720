@@ -356,10 +356,7 @@ export type Database = {
     Functions: {
       assign_collector_role: {
         Args: {
-          member_id: string
-          collector_name: string
-          collector_prefix: string
-          collector_number: string
+          issue_details: Json
         }
         Returns: string
       }
@@ -380,6 +377,18 @@ export type Database = {
           member_number: string
           details: Json
         }[]
+      }
+      fix_multiple_roles: {
+        Args: {
+          issue_details: Json
+        }
+        Returns: string
+      }
+      fix_security_settings: {
+        Args: {
+          issue_details: Json
+        }
+        Returns: string
       }
       generate_full_backup: {
         Args: Record<PropertyKey, never>
@@ -512,10 +521,10 @@ export type TablesUpdate<
     : never
   : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
     ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
-        Update: infer U
-      }
-      ? U
-      : never
+      Update: infer U
+    }
+    ? U
+    : never
     : never
 
 export type Enums<
