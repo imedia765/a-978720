@@ -35,7 +35,7 @@ const PaymentCard = ({
           <h3 className="text-lg font-medium text-white mb-4">Annual Payment</h3>
           <div className="flex items-center justify-between mb-4">
             <div>
-              <p className="text-2xl font-bold text-dashboard-accent1">£40</p>
+              <p className="text-2xl font-bold text-white">£40</p>
               <p className="text-sm font-bold text-dashboard-warning">
                 Due: January 1st, 2025
               </p>
@@ -70,7 +70,7 @@ const PaymentCard = ({
           <h3 className="text-lg font-medium text-white mb-4">Emergency Collection</h3>
           <div className="flex items-center justify-between mb-4">
             <div>
-              <p className="text-2xl font-bold text-dashboard-accent1">
+              <p className="text-2xl font-bold text-white">
                 £{emergencyCollectionAmount}
               </p>
               <p className="text-sm font-bold text-dashboard-warning">
