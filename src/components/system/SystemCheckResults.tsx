@@ -17,6 +17,24 @@ interface SystemCheckResultsProps {
   checks: SystemCheck[];
 }
 
+type FixFunction = 
+  | "fix_multiple_roles"
+  | "assign_collector_role"
+  | "fix_security_settings";
+
+const getFixFunction = (checkType: string): FixFunction | null => {
+  switch (checkType) {
+    case 'Multiple Roles Assigned':
+      return "fix_multiple_roles";
+    case 'Collectors Without Role':
+      return "assign_collector_role";
+    case 'Security Settings':
+      return "fix_security_settings";
+    default:
+      return null;
+  }
+};
+
 const SystemCheckResults = ({ checks }: SystemCheckResultsProps) => {
   const { toast } = useToast();
   
@@ -37,28 +55,18 @@ const SystemCheckResults = ({ checks }: SystemCheckResultsProps) => {
   });
 
   const handleFix = async (checkType: string, details: any) => {
-    try {
-      let functionName = '';
-      
-      switch (checkType) {
-        case 'Multiple Roles Assigned':
-          functionName = 'fix_multiple_roles';
-          break;
-        case 'Collectors Without Role':
-          functionName = 'assign_collector_role';
-          break;
-        case 'Security Settings':
-          functionName = 'fix_security_settings';
-          break;
-        default:
-          toast({
-            title: "Action Not Available",
-            description: "No automatic fix is available for this issue.",
-            variant: "destructive",
-          });
-          return;
-      }
+    const functionName = getFixFunction(checkType);
+    
+    if (!functionName) {
+      toast({
+        title: "Action Not Available",
+        description: "No automatic fix is available for this issue.",
+        variant: "destructive",
+      });
+      return;
+    }
 
+    try {
       const { data, error } = await supabase.rpc(functionName, { issue_details: details });
       
       if (error) throw error;
