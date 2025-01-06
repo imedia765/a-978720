@@ -5,9 +5,10 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Shield, Users } from 'lucide-react';
+import { Shield, Users, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Database } from "@/integrations/supabase/types";
+import { Input } from "@/components/ui/input";
 
 type UserRole = {
   user_id: string;
@@ -16,16 +17,21 @@ type UserRole = {
   member_number: string;
 }
 
+const ITEMS_PER_PAGE = 3;
+
 const RoleManagementCard = () => {
   const { toast } = useToast();
-  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(0);
 
   const { data: users, refetch: refetchUsers } = useQuery({
-    queryKey: ['users-with-roles'],
+    queryKey: ['users-with-roles', searchTerm, currentPage],
     queryFn: async () => {
       const { data: members, error: membersError } = await supabase
         .from('members')
-        .select('auth_user_id, full_name, member_number');
+        .select('auth_user_id, full_name, member_number')
+        .or(`full_name.ilike.%${searchTerm}%,member_number.ilike.%${searchTerm}%`)
+        .range(currentPage * ITEMS_PER_PAGE, (currentPage + 1) * ITEMS_PER_PAGE - 1);
 
       if (membersError) throw membersError;
 
@@ -35,7 +41,6 @@ const RoleManagementCard = () => {
 
       if (rolesError) throw rolesError;
 
-      // Combine member info with their roles
       const usersWithRoles = members.map(member => {
         const userRoles = roles.filter(role => role.user_id === member.auth_user_id);
         return {
@@ -52,7 +57,6 @@ const RoleManagementCard = () => {
 
   const handleRoleChange = async (userId: string, newRole: Database['public']['Enums']['app_role']) => {
     try {
-      // First remove existing roles
       const { error: deleteError } = await supabase
         .from('user_roles')
         .delete()
@@ -60,7 +64,6 @@ const RoleManagementCard = () => {
 
       if (deleteError) throw deleteError;
 
-      // Then add the new role
       const { error: insertError } = await supabase
         .from('user_roles')
         .insert({ user_id: userId, role: newRole });
@@ -97,6 +100,17 @@ const RoleManagementCard = () => {
         </CardDescription>
       </CardHeader>
       <CardContent>
+        <div className="mb-4 relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+          <Input
+            type="text"
+            placeholder="Search by name or member number..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10 bg-dashboard-card border-white/10 focus:border-white/20"
+          />
+        </div>
+        
         <ScrollArea className="h-[400px] w-full rounded-md">
           <div className="space-y-4">
             {users?.map((user) => (
@@ -140,6 +154,27 @@ const RoleManagementCard = () => {
             ))}
           </div>
         </ScrollArea>
+        
+        <div className="flex justify-center gap-2 mt-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
+            disabled={currentPage === 0}
+            className="border-dashboard-accent1/20 hover:bg-dashboard-accent1/10"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage(p => p + 1)}
+            disabled={!users || users.length < ITEMS_PER_PAGE}
+            className="border-dashboard-accent1/20 hover:bg-dashboard-accent1/10"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );
