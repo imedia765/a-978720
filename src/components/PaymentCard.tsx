@@ -40,12 +40,12 @@ const PaymentCard = ({
     switch (status) {
       case 'completed':
         return 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
+      case 'pending':
+        return 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30';
       case 'due':
-        return 'bg-amber-500/20 text-amber-400 border border-amber-500/30';
+        return 'bg-blue-500/20 text-blue-400 border border-blue-500/30';
       case 'overdue':
         return 'bg-rose-500/20 text-rose-400 border border-rose-500/30';
-      case 'pending':
-        return 'bg-blue-500/20 text-blue-400 border border-blue-500/30';
       default:
         return 'bg-blue-500/20 text-blue-400 border border-blue-500/30';
     }
