@@ -4,10 +4,10 @@ import LogsTabs from './logs/LogsTabs';
 import AuditLogsList from './logs/AuditLogsList';
 import MonitoringLogsList from './logs/MonitoringLogsList';
 import DebugConsole from './logs/DebugConsole';
-import { LOGS_TABS } from '@/constants/logs';
+import { LOGS_TABS, LogsTabsType } from '@/constants/logs';
 
 const AuditLogsView = () => {
-  const [activeTab, setActiveTab] = useState(LOGS_TABS.AUDIT);
+  const [activeTab, setActiveTab] = useState<LogsTabsType>(LOGS_TABS.AUDIT);
   const [debugLogs] = useState(['Debug logging initialized', 'Real-time subscriptions active']);
 
   return (
@@ -19,7 +19,7 @@ const AuditLogsView = () => {
       
       <LogsTabs
         activeTab={activeTab}
-        onTabChange={(value) => setActiveTab(value)}
+        onTabChange={setActiveTab}
       />
 
       {activeTab === LOGS_TABS.AUDIT && <AuditLogsList />}
