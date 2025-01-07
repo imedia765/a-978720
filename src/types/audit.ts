@@ -4,12 +4,12 @@ export type AuditOperation = 'create' | 'update' | 'delete';
 export interface AuditLog {
   id: string;
   timestamp: string;
-  user_id: string | null;
+  user_id: string;
   operation: AuditOperation;
   table_name: string;
-  record_id?: string | null;
-  old_values?: Record<string, any> | null;
-  new_values?: Record<string, any> | null;
+  record_id?: string;
+  old_values?: Record<string, any>;
+  new_values?: Record<string, any>;
   severity: SeverityLevel;
-  compressed: boolean | null;
+  compressed: boolean;
 }

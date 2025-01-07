@@ -64,21 +64,6 @@ const PaymentHistoryTable = () => {
     );
   }
 
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'approved':
-      case 'completed':
-      case 'paid':
-        return 'text-dashboard-accent3';
-      case 'pending':
-        return 'text-dashboard-warning';
-      case 'rejected':
-        return 'text-red-400';
-      default:
-        return 'text-dashboard-text';
-    }
-  };
-
   return (
     <div className="glass-card p-4">
       <h3 className="text-xl font-semibold mb-4 text-white">Payment History</h3>
@@ -96,13 +81,9 @@ const PaymentHistoryTable = () => {
             {payments.map((payment) => (
               <TableRow key={payment.id}>
                 <TableCell>{format(new Date(payment.date), 'PPP')}</TableCell>
-                <TableCell className="capitalize">{payment.type}</TableCell>
-                <TableCell className="text-dashboard-accent2">£{payment.amount}</TableCell>
-                <TableCell>
-                  <span className={`${getStatusColor(payment.status)} font-medium`}>
-                    {payment.status}
-                  </span>
-                </TableCell>
+                <TableCell>{payment.type}</TableCell>
+                <TableCell>£{payment.amount}</TableCell>
+                <TableCell>{payment.status}</TableCell>
               </TableRow>
             ))}
           </TableBody>
