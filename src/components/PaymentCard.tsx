@@ -2,7 +2,7 @@ import { Card } from "@/components/ui/card";
 import { CircularProgressbar, buildStyles } from 'react-circular-progressbar';
 import 'react-circular-progressbar/dist/styles.css';
 import { format } from 'date-fns';
-import { AlertCircle, AlertOctagon, Check, Clock } from "lucide-react";
+import { AlertOctagon, Check, Clock } from "lucide-react";
 
 interface PaymentCardProps {
   annualPaymentStatus?: 'completed' | 'pending' | 'due' | 'overdue';
@@ -43,7 +43,7 @@ const PaymentCard = ({
       case 'pending':
         return 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30';
       case 'due':
-        return 'bg-dashboard-warning/20 text-dashboard-warning border border-dashboard-warning/30';
+        return 'bg-blue-500/20 text-blue-400 border border-blue-500/30';
       case 'overdue':
         return 'bg-rose-500/20 text-rose-400 border border-rose-500/30';
       default:
@@ -60,9 +60,9 @@ const PaymentCard = ({
       case 'overdue':
         return <AlertOctagon className="h-6 w-6" />;
       case 'pending':
-        return <AlertCircle className="h-6 w-6" />;
+        return <Clock className="h-6 w-6" />;
       default:
-        return <AlertCircle className="h-6 w-6" />;
+        return <Clock className="h-6 w-6" />;
     }
   };
 
