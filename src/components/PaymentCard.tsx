@@ -43,7 +43,7 @@ const PaymentCard = ({
       case 'pending':
         return 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30';
       case 'due':
-        return 'bg-blue-500/20 text-blue-400 border border-blue-500/30';
+        return 'bg-dashboard-warning/20 text-dashboard-warning border border-dashboard-warning/30';
       case 'overdue':
         return 'bg-rose-500/20 text-rose-400 border border-rose-500/30';
       default:
