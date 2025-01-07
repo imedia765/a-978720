@@ -75,7 +75,7 @@ const PaymentCard = ({
           <div className="flex items-center justify-between mb-4">
             <div>
               <p className="text-2xl font-bold text-white">£40</p>
-              <p className="text-sm font-bold" style={{ color: getStatusColor(annualPaymentStatus).split(' ')[1].replace('text-', '') }}>
+              <p className="text-lg font-bold text-dashboard-warning">
                 Due: {formatDate(annualPaymentDueDate)}
               </p>
               {lastAnnualPaymentDate && (
@@ -124,7 +124,7 @@ const PaymentCard = ({
               <p className="text-2xl font-bold text-white">
                 £{emergencyCollectionAmount}
               </p>
-              <p className="text-sm font-bold" style={{ color: getStatusColor(emergencyCollectionStatus).split(' ')[1].replace('text-', '') }}>
+              <p className="text-lg font-bold text-dashboard-warning">
                 Due: {formatDate(emergencyCollectionDueDate)}
               </p>
               {lastEmergencyPaymentDate && (
