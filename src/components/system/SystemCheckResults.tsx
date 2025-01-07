@@ -6,32 +6,65 @@ import { useToast } from "@/hooks/use-toast";
 import { getStatusColor, getStatusIcon } from "./utils/systemCheckUtils";
 import { SystemCheckDetailsTable } from "./SystemCheckDetailsTable";
 import { SystemCheckActionButton } from "./SystemCheckActionButton";
-
-interface SystemCheck {
-  check_type: string;
-  status: string;
-  details: any;
-}
+import { SystemCheck } from "@/types/system";
+import { Database } from "@/integrations/supabase/types";
 
 interface SystemCheckResultsProps {
   checks: SystemCheck[];
 }
 
-type FixFunction = 
-  | "fix_multiple_roles"
-  | "assign_collector_role"
-  | "fix_security_settings";
+type DatabaseFunctions = Database['public']['Functions'];
+type FunctionName = keyof DatabaseFunctions;
 
-const getFixFunction = (checkType: string): FixFunction | null => {
+type AssignCollectorParams = {
+  member_id: string;
+  collector_name: string;
+  collector_prefix: string;
+  collector_number: string;
+};
+
+type ValidateUserRolesParams = Record<PropertyKey, never>;
+
+type AuditSecurityParams = Record<PropertyKey, never>;
+
+type CheckMemberNumbersParams = Record<PropertyKey, never>;
+
+type RPCFunctionParams = 
+  | AssignCollectorParams
+  | ValidateUserRolesParams
+  | AuditSecurityParams
+  | CheckMemberNumbersParams;
+
+const getFixFunction = (checkType: string): FunctionName | null => {
   switch (checkType) {
     case 'Multiple Roles Assigned':
-      return "fix_multiple_roles";
+      return "perform_user_roles_sync";
     case 'Collectors Without Role':
-      return "assign_collector_role";
+      return "validate_user_roles";
     case 'Security Settings':
-      return "fix_security_settings";
+      return "audit_security_settings";
+    case 'Member Number Issues':
+      return "check_member_numbers";
     default:
       return null;
+  }
+};
+
+const getFixParams = (functionName: FunctionName, details: any): RPCFunctionParams => {
+  switch (functionName) {
+    case 'assign_collector_role':
+      return {
+        member_id: details.member_id,
+        collector_name: details.collector_name,
+        collector_prefix: details.prefix,
+        collector_number: details.number
+      };
+    case 'validate_user_roles':
+    case 'audit_security_settings':
+    case 'check_member_numbers':
+      return {};
+    default:
+      return {};
   }
 };
 
@@ -67,15 +100,18 @@ const SystemCheckResults = ({ checks }: SystemCheckResultsProps) => {
     }
 
     try {
-      const { data, error } = await supabase.rpc(functionName, { 
-        issue_details: details 
-      });
+      const params = getFixParams(functionName, details);
+      const { data: responseData, error } = await supabase.rpc(functionName, params);
       
       if (error) throw error;
-      
+
+      const message = typeof responseData === 'object' && responseData !== null && 'message' in responseData
+        ? String(responseData.message)
+        : `Successfully resolved ${checkType} issue`;
+
       toast({
         title: "Fix Applied",
-        description: data || `Successfully resolved ${checkType} issue`,
+        description: message,
       });
     } catch (error: any) {
       console.error('Fix error:', error);

@@ -261,6 +261,36 @@ export type Database = {
         }
         Relationships: []
       }
+      monitoring_logs: {
+        Row: {
+          details: Json | null
+          event_type: Database["public"]["Enums"]["monitoring_event_type"]
+          id: string
+          metric_name: string
+          metric_value: number
+          severity: Database["public"]["Enums"]["severity_level"] | null
+          timestamp: string | null
+        }
+        Insert: {
+          details?: Json | null
+          event_type: Database["public"]["Enums"]["monitoring_event_type"]
+          id?: string
+          metric_name: string
+          metric_value: number
+          severity?: Database["public"]["Enums"]["severity_level"] | null
+          timestamp?: string | null
+        }
+        Update: {
+          details?: Json | null
+          event_type?: Database["public"]["Enums"]["monitoring_event_type"]
+          id?: string
+          metric_name?: string
+          metric_value?: number
+          severity?: Database["public"]["Enums"]["severity_level"] | null
+          timestamp?: string | null
+        }
+        Relationships: []
+      }
       payment_requests: {
         Row: {
           amount: number
@@ -356,7 +386,10 @@ export type Database = {
     Functions: {
       assign_collector_role: {
         Args: {
-          issue_details: Json
+          member_id: string
+          collector_name: string
+          collector_prefix: string
+          collector_number: string
         }
         Returns: string
       }
@@ -377,18 +410,6 @@ export type Database = {
           member_number: string
           details: Json
         }[]
-      }
-      fix_multiple_roles: {
-        Args: {
-          issue_details: Json
-        }
-        Returns: string
-      }
-      fix_security_settings: {
-        Args: {
-          issue_details: Json
-        }
-        Returns: string
       }
       generate_full_backup: {
         Args: Record<PropertyKey, never>
@@ -411,6 +432,12 @@ export type Database = {
         }[]
       }
       is_admin: {
+        Args: {
+          user_uid: string
+        }
+        Returns: boolean
+      }
+      is_admin_user: {
         Args: {
           user_uid: string
         }
@@ -449,6 +476,12 @@ export type Database = {
       app_role: "admin" | "collector" | "member"
       audit_operation: "create" | "update" | "delete"
       backup_operation_type: "backup" | "restore"
+      monitoring_event_type:
+        | "system_performance"
+        | "api_latency"
+        | "error_rate"
+        | "user_activity"
+        | "resource_usage"
       payment_method: "bank_transfer" | "cash"
       severity_level: "info" | "warning" | "error" | "critical"
     }
@@ -467,7 +500,7 @@ export type Tables<
   TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
     ? keyof (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
         Database[PublicTableNameOrOptions["schema"]]["Views"])
-    : never,
+    : never = never,
 > = PublicTableNameOrOptions extends { schema: keyof Database }
   ? (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
       Database[PublicTableNameOrOptions["schema"]]["Views"])[TableName] extends {
@@ -521,10 +554,10 @@ export type TablesUpdate<
     : never
   : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
     ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
-      Update: infer U
-    }
-    ? U
-    : never
+        Update: infer U
+      }
+      ? U
+      : never
     : never
 
 export type Enums<

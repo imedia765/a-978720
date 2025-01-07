@@ -55,12 +55,6 @@ const PaymentHistoryTable = () => {
     },
   });
 
-  // Filter payments to show yearly payments and completed emergency collections
-  const filteredPayments = payments.filter(payment => 
-    payment.type === 'Annual Payment' || 
-    (payment.type === 'Emergency Collection' && payment.status === 'completed')
-  );
-
   if (isLoading) {
     return (
       <div className="glass-card p-4">
@@ -69,6 +63,21 @@ const PaymentHistoryTable = () => {
       </div>
     );
   }
+
+  const getStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'approved':
+      case 'completed':
+      case 'paid':
+        return 'text-dashboard-accent3';
+      case 'pending':
+        return 'text-dashboard-warning';
+      case 'rejected':
+        return 'text-red-400';
+      default:
+        return 'text-dashboard-text';
+    }
+  };
 
   return (
     <div className="glass-card p-4">
@@ -84,12 +93,16 @@ const PaymentHistoryTable = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredPayments.map((payment) => (
+            {payments.map((payment) => (
               <TableRow key={payment.id}>
                 <TableCell>{format(new Date(payment.date), 'PPP')}</TableCell>
-                <TableCell>{payment.type}</TableCell>
-                <TableCell>£{payment.amount}</TableCell>
-                <TableCell>{payment.status}</TableCell>
+                <TableCell className="capitalize">{payment.type}</TableCell>
+                <TableCell className="text-dashboard-accent2">£{payment.amount}</TableCell>
+                <TableCell>
+                  <span className={`${getStatusColor(payment.status)} font-medium`}>
+                    {payment.status}
+                  </span>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
