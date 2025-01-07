@@ -82,7 +82,9 @@ const PaymentHistoryTable = () => {
               <TableRow key={payment.id}>
                 <TableCell>{format(new Date(payment.date), 'PPP')}</TableCell>
                 <TableCell>{payment.type}</TableCell>
-                <TableCell>£{payment.amount}</TableCell>
+                <TableCell className="text-dashboard-accent3">
+                  <span className="text-dashboard-accent3">£</span>{payment.amount}
+                </TableCell>
                 <TableCell>{payment.status}</TableCell>
               </TableRow>
             ))}
