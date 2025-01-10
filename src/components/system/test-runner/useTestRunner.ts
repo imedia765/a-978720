@@ -23,25 +23,26 @@ export const useTestRunner = () => {
       if (error) {
         console.error('Test run error:', error);
         setTestLogs(prev => [...prev, `❌ Error running checks: ${error.message}`]);
-        throw new Error(`Failed to run system checks: ${error.message}`);
+        throw error;
       }
 
-      if (!data) {
-        throw new Error('No test results returned');
+      if (!data || !Array.isArray(data)) {
+        throw new Error('Invalid response format from system checks');
       }
 
       console.log('Combined system checks results:', data);
 
       // Process and categorize results
-      const processedResults = Array.isArray(data) ? data.map((result: any) => ({
+      const processedResults = data.map(result => ({
         ...result,
         test_name: result.metric_name || result.check_type,
-        test_type: result.test_category
-      })) : [];
+        test_type: result.test_category || 'system'
+      }));
 
       setTestResults(processedResults);
       setProgress(100);
       setCurrentTest('All checks complete');
+      setTestLogs(prev => [...prev, '✅ System checks completed successfully']);
       toast.success('System checks completed successfully');
       
       return processedResults;
@@ -62,6 +63,7 @@ export const useTestRunner = () => {
       setTestLogs(prev => [...prev, `❌ Error: ${error.message}`]);
       setProgress(0);
       setCurrentTest('Test run failed');
+      toast.error("Failed to run system checks");
     }
   });
 
