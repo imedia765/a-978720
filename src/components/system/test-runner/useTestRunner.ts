@@ -32,7 +32,13 @@ export const useTestRunner = () => {
         .rpc('run_combined_system_checks');
 
       if (error) {
-        console.error('Test run error:', error);
+        console.error('Test run error:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
+        
         const errorMessage = error.message || 'Unknown error occurred';
         const errorDetails = error.details || '';
         setTestLogs(prev => [
