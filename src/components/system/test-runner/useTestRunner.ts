@@ -3,12 +3,22 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+interface TestResult {
+  check_type: string;
+  metric_name: string | null;
+  current_value: number | null;
+  threshold: number | null;
+  status: string;
+  details: Record<string, any>;
+  test_category: string;
+}
+
 export const useTestRunner = () => {
   const [testLogs, setTestLogs] = useState<string[]>(['Test runner initialized and ready']);
   const [isRunning, setIsRunning] = useState(false);
   const [progress, setProgress] = useState(0);
   const [currentTest, setCurrentTest] = useState('');
-  const [testResults, setTestResults] = useState<any[]>([]);
+  const [testResults, setTestResults] = useState<TestResult[]>([]);
 
   const runAllTests = async () => {
     setIsRunning(true);
@@ -16,6 +26,8 @@ export const useTestRunner = () => {
     setProgress(0);
     
     try {
+      console.log('Initiating system checks...');
+      
       const { data, error } = await supabase
         .rpc('run_combined_system_checks')
         .throwOnError();
@@ -32,11 +44,14 @@ export const useTestRunner = () => {
 
       console.log('Combined system checks results:', data);
 
-      // Process and categorize results
-      const processedResults = data.map(result => ({
-        ...result,
-        test_name: result.metric_name || result.check_type,
-        test_type: result.test_category || 'system'
+      const processedResults = data.map((result: TestResult) => ({
+        check_type: result.check_type || 'Unknown Check',
+        metric_name: result.metric_name,
+        current_value: result.current_value,
+        threshold: result.threshold,
+        status: result.status || 'Unknown',
+        details: result.details || {},
+        test_category: result.test_category || 'system'
       }));
 
       setTestResults(processedResults);
@@ -48,8 +63,9 @@ export const useTestRunner = () => {
       return processedResults;
     } catch (error: any) {
       console.error('System checks error:', error);
-      setTestLogs(prev => [...prev, `❌ Error running checks: ${error.message}`]);
-      toast.error("System checks failed");
+      const errorMessage = error.message || 'Unknown error occurred';
+      setTestLogs(prev => [...prev, `❌ Error running checks: ${errorMessage}`]);
+      toast.error(`System checks failed: ${errorMessage}`);
       throw error;
     } finally {
       setIsRunning(false);
@@ -63,7 +79,7 @@ export const useTestRunner = () => {
       setTestLogs(prev => [...prev, `❌ Error: ${error.message}`]);
       setProgress(0);
       setCurrentTest('Test run failed');
-      toast.error("Failed to run system checks");
+      toast.error(`Failed to run system checks: ${error.message}`);
     }
   });
 
