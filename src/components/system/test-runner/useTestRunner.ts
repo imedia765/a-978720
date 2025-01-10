@@ -28,26 +28,29 @@ export const useTestRunner = () => {
     try {
       console.log('Initiating system checks...');
       
-      const { data, error } = await supabase
-        .rpc('run_combined_system_checks');
-
-      if (error) {
+      const response = await supabase
+        .rpc('run_combined_system_checks')
+        .single();
+        
+      if (response.error) {
         console.error('Test run error:', {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code
+          message: response.error.message,
+          details: response.error.details,
+          hint: response.error.hint,
+          code: response.error.code
         });
         
-        const errorMessage = error.message || 'Unknown error occurred';
-        const errorDetails = error.details || '';
+        const errorMessage = response.error.message || 'Unknown error occurred';
+        const errorDetails = response.error.details || '';
         setTestLogs(prev => [
-          ...prev, 
+          ...prev,
           `❌ Error running checks: ${errorMessage}`,
           `📝 Error details: ${errorDetails}`
         ]);
         throw new Error(`${errorMessage}\n${errorDetails}`);
       }
+      
+      const data = response.data;
 
       if (!data || !Array.isArray(data)) {
         const message = 'Invalid response format from system checks';
