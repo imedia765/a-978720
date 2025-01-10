@@ -18,10 +18,11 @@ export const useTestRunner = () => {
     try {
       const { data, error } = await supabase
         .rpc('run_combined_system_checks')
-        .single();
+        .throwOnError();
 
       if (error) {
         console.error('Test run error:', error);
+        setTestLogs(prev => [...prev, `❌ Error running checks: ${error.message}`]);
         throw new Error(`Failed to run system checks: ${error.message}`);
       }
 
