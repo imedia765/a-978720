@@ -29,17 +29,24 @@ export const useTestRunner = () => {
       console.log('Initiating system checks...');
       
       const { data, error } = await supabase
-        .rpc('run_combined_system_checks')
-        .throwOnError();
+        .rpc('run_combined_system_checks');
 
       if (error) {
         console.error('Test run error:', error);
-        setTestLogs(prev => [...prev, `❌ Error running checks: ${error.message}`]);
-        throw error;
+        const errorMessage = error.message || 'Unknown error occurred';
+        const errorDetails = error.details || '';
+        setTestLogs(prev => [
+          ...prev, 
+          `❌ Error running checks: ${errorMessage}`,
+          `📝 Error details: ${errorDetails}`
+        ]);
+        throw new Error(`${errorMessage}\n${errorDetails}`);
       }
 
       if (!data || !Array.isArray(data)) {
-        throw new Error('Invalid response format from system checks');
+        const message = 'Invalid response format from system checks';
+        setTestLogs(prev => [...prev, `❌ ${message}`]);
+        throw new Error(message);
       }
 
       console.log('Combined system checks results:', data);
@@ -57,14 +64,22 @@ export const useTestRunner = () => {
       setTestResults(processedResults);
       setProgress(100);
       setCurrentTest('All checks complete');
-      setTestLogs(prev => [...prev, '✅ System checks completed successfully']);
-      toast.success('System checks completed successfully');
+      setTestLogs(prev => [
+        ...prev, 
+        '✅ System checks completed successfully',
+        `📊 Found ${processedResults.length} test results`
+      ]);
+      toast.success(`System checks completed: ${processedResults.length} results`);
       
       return processedResults;
     } catch (error: any) {
       console.error('System checks error:', error);
       const errorMessage = error.message || 'Unknown error occurred';
-      setTestLogs(prev => [...prev, `❌ Error running checks: ${errorMessage}`]);
+      setTestLogs(prev => [
+        ...prev, 
+        `❌ Error running checks: ${errorMessage}`,
+        '⚠️ Check console for detailed error information'
+      ]);
       toast.error(`System checks failed: ${errorMessage}`);
       throw error;
     } finally {
@@ -76,7 +91,11 @@ export const useTestRunner = () => {
     mutationFn: runAllTests,
     onError: (error: Error) => {
       console.error('Mutation error:', error);
-      setTestLogs(prev => [...prev, `❌ Error: ${error.message}`]);
+      setTestLogs(prev => [
+        ...prev, 
+        `❌ Error: ${error.message}`,
+        '⚠️ Check console for detailed error information'
+      ]);
       setProgress(0);
       setCurrentTest('Test run failed');
       toast.error(`Failed to run system checks: ${error.message}`);
