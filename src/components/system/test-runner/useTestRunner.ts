@@ -22,8 +22,9 @@ export const useTestRunner = () => {
 
   const runAllTests = async () => {
     setIsRunning(true);
-    setTestLogs(prev => [...prev, '🚀 Starting combined system checks...']);
+    setTestLogs(prev => [...prev, '🚀 Starting system checks...']);
     setProgress(0);
+    setCurrentTest('Initializing tests...');
     
     try {
       console.log('Initiating system checks...');
@@ -55,27 +56,48 @@ export const useTestRunner = () => {
         throw new Error(message);
       }
 
-      console.log('Combined system checks results:', data);
+      console.log('System checks results:', data);
 
-      const processedResults = data.map((result: TestResult) => ({
+      // Process and validate each result
+      const processedResults = data.map((result: any) => ({
         check_type: result.check_type || 'Unknown Check',
         metric_name: result.metric_name,
-        current_value: result.current_value,
-        threshold: result.threshold,
+        current_value: typeof result.current_value === 'number' ? result.current_value : null,
+        threshold: typeof result.threshold === 'number' ? result.threshold : null,
         status: result.status || 'Unknown',
         details: result.details || {},
         test_category: result.test_category || 'system'
       }));
 
+      // Group results by category for progress tracking
+      const categories = [...new Set(processedResults.map(r => r.test_category))];
+      const totalSteps = categories.length;
+      
+      // Update progress as we process each category
+      categories.forEach((category, index) => {
+        const progress = Math.round(((index + 1) / totalSteps) * 100);
+        setProgress(progress);
+        setCurrentTest(`Processing ${category} tests...`);
+      });
+
       setTestResults(processedResults);
       setProgress(100);
       setCurrentTest('All checks complete');
+      
+      const resultSummary = categories.map(category => {
+        const categoryResults = processedResults.filter(r => r.test_category === category);
+        const warnings = categoryResults.filter(r => r.status.toLowerCase() === 'warning').length;
+        const critical = categoryResults.filter(r => r.status.toLowerCase() === 'critical').length;
+        return `${category}: ${categoryResults.length} tests (${warnings} warnings, ${critical} critical)`;
+      });
+
       setTestLogs(prev => [
         ...prev, 
         '✅ System checks completed successfully',
-        `📊 Found ${processedResults.length} test results`
+        ...resultSummary.map(summary => `📊 ${summary}`)
       ]);
-      toast.success(`System checks completed: ${processedResults.length} results`);
+
+      toast.success('System checks completed successfully');
       
       return processedResults;
     } catch (error: any) {
@@ -108,6 +130,7 @@ export const useTestRunner = () => {
     }
   });
 
+  // Subscribe to real-time test logs
   useQuery({
     queryKey: ['test-logs'],
     queryFn: async () => {
