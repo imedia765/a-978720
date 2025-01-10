@@ -16,21 +16,27 @@ export const useTestRunner = () => {
     setProgress(0);
     
     try {
-      const { data, error } = await supabase.rpc('run_combined_system_checks');
+      const { data, error } = await supabase
+        .rpc('run_combined_system_checks')
+        .single();
 
       if (error) {
         console.error('Test run error:', error);
         throw new Error(`Failed to run system checks: ${error.message}`);
       }
 
+      if (!data) {
+        throw new Error('No test results returned');
+      }
+
       console.log('Combined system checks results:', data);
 
       // Process and categorize results
-      const processedResults = data.map((result: any) => ({
+      const processedResults = Array.isArray(data) ? data.map((result: any) => ({
         ...result,
         test_name: result.metric_name || result.check_type,
         test_type: result.test_category
-      }));
+      })) : [];
 
       setTestResults(processedResults);
       setProgress(100);
