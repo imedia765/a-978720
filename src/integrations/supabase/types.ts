@@ -554,12 +554,29 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      get_audit_activity_summary: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          hour_bucket: string
+          operation: string
+          count: number
+        }[]
+      }
       get_rls_policies: {
         Args: Record<PropertyKey, never>
         Returns: {
           table_name: string
           name: string
           command: string
+        }[]
+      }
+      get_system_metrics_history: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          recorded_at: string
+          metric_name: string
+          metric_value: number
+          category: string
         }[]
       }
       get_tables_info: {

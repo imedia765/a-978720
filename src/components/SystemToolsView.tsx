@@ -12,6 +12,8 @@ import TestHeader from './system/test-runner/TestHeader';
 import TestProgress from './system/test-runner/TestProgress';
 import TestResults from './system/test-runner/TestResults';
 import TestLogs from './system/test-runner/TestLogs';
+import SystemMetricsChart from './system/metrics/SystemMetricsChart';
+import AuditActivityChart from './system/metrics/AuditActivityChart';
 
 const SystemToolsView = () => {
   const { toast } = useToast();
@@ -65,22 +67,24 @@ const SystemToolsView = () => {
       <div className="grid gap-6">
         <SystemHealthCheck />
         
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <SystemMetricsChart />
+          <AuditActivityChart />
+        </div>
+
         <Card className="dashboard-card">
           <div className="p-6 space-y-6">
             <TestHeader 
               isRunning={isRunning}
               onRunTests={() => runTestsMutation.mutate()}
             />
-
             <TestProgress 
               isRunning={isRunning}
               currentTest={currentTest}
               progress={progress}
               error={runTestsMutation.error}
             />
-
             <TestResults results={testResults} />
-            
             <TestLogs logs={testLogs} />
           </div>
         </Card>
