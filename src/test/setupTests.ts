@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom';
-import { cleanup, render } from '@testing-library/react';
+import { cleanup } from '@testing-library/react';
 import { expect, afterEach, vi } from 'vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactNode } from 'react';
@@ -17,9 +17,13 @@ global.navigator = {
   userAgent: 'node.js',
 } as Navigator;
 
-// Mock localStorage and sessionStorage
+// Create properly typed storage mock
+interface StorageMock {
+  [key: string]: string;
+}
+
 const createStorageMock = () => {
-  const storage: { [key: string]: string } = {};
+  const storage: StorageMock = {};
   return {
     getItem: vi.fn((key: string) => storage[key] || null),
     setItem: vi.fn((key: string, value: string) => {
@@ -38,8 +42,8 @@ const createStorageMock = () => {
   };
 };
 
-global.localStorage = createStorageMock();
-global.sessionStorage = createStorageMock();
+global.localStorage = createStorageMock() as unknown as Storage;
+global.sessionStorage = createStorageMock() as unknown as Storage;
 
 // Mock window.matchMedia
 global.window.matchMedia = vi.fn().mockImplementation(query => ({
@@ -62,7 +66,7 @@ export const createWrapper = () => {
       },
     },
   });
-  
+
   return ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={queryClient}>
       {children}

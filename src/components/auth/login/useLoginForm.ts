@@ -41,60 +41,64 @@ export const useLoginForm = () => {
         }
       });
 
-      if (signInError && signInError.message.includes('Invalid login credentials')) {
-        console.log('Sign in failed, attempting signup');
-        
-        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: {
-              member_number: memberNumber,
-            },
-            redirectTo: redirectUrl
-          }
-        });
-
-        if (signUpError) {
-          console.error('Signup error:', signUpError);
-          throw signUpError;
-        }
-
-        if (signUpData.user) {
-          await updateMemberWithAuthId(member.id, signUpData.user.id);
-          await addMemberRole(signUpData.user.id);
-
-          console.log('Member updated and role assigned, attempting final sign in');
-          
-          const { data: finalSignInData, error: finalSignInError } = await supabase.auth.signInWithPassword({
-            email,
-            password,
-            options: {
-              redirectTo: redirectUrl
-            }
-          });
-
-          if (finalSignInError) {
-            console.error('Final sign in error:', finalSignInError);
-            throw finalSignInError;
-          }
-
-          if (!finalSignInData?.session) {
-            throw new Error('Failed to establish session after signup');
-          }
-        }
-      } else if (signInError) {
+      if (signInError) {
         if (signInError.message.includes('Failed to fetch')) {
           console.error('Network error during sign in:', signInError);
           throw new Error('Network connection error. Please check your connection and try again.');
         }
-        await handleSignInError(signInError, email, password);
+
+        if (signInError.message.includes('Invalid login credentials')) {
+          console.log('Sign in failed, attempting signup');
+          
+          const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+              data: {
+                member_number: memberNumber,
+              },
+              redirectTo: redirectUrl
+            }
+          });
+
+          if (signUpError) {
+            console.error('Signup error:', signUpError);
+            throw signUpError;
+          }
+
+          if (signUpData.user) {
+            await updateMemberWithAuthId(member.id, signUpData.user.id);
+            await addMemberRole(signUpData.user.id);
+
+            console.log('Member updated and role assigned, attempting final sign in');
+            
+            const { data: finalSignInData, error: finalSignInError } = await supabase.auth.signInWithPassword({
+              email,
+              password,
+              options: {
+                redirectTo: redirectUrl
+              }
+            });
+
+            if (finalSignInError) {
+              console.error('Final sign in error:', finalSignInError);
+              throw finalSignInError;
+            }
+
+            if (!finalSignInData?.session) {
+              throw new Error('Failed to establish session after signup');
+            }
+          }
+        } else {
+          await handleSignInError(signInError, email, password);
+        }
       }
 
       // Verify session is established with retries
       let session = null;
       let retryCount = 0;
       const maxRetries = 3;
+      const retryDelay = 1000; // 1 second delay between retries
 
       while (!session && retryCount < maxRetries) {
         const { data: { session: currentSession }, error: sessionError } = await supabase.auth.getSession();
@@ -103,7 +107,7 @@ export const useLoginForm = () => {
           console.error(`Session verification error (attempt ${retryCount + 1}):`, sessionError);
           retryCount++;
           if (retryCount === maxRetries) throw sessionError;
-          await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second before retry
+          await new Promise(resolve => setTimeout(resolve, retryDelay));
           continue;
         }
 
@@ -113,7 +117,7 @@ export const useLoginForm = () => {
         }
 
         retryCount++;
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise(resolve => setTimeout(resolve, retryDelay));
       }
 
       if (!session) {
