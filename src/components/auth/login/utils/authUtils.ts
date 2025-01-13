@@ -3,9 +3,14 @@ import { QueryClient } from '@tanstack/react-query';
 
 export const clearAuthState = async () => {
   console.log('Clearing existing session...');
-  await supabase.auth.signOut();
-  await new QueryClient().clear();
-  localStorage.clear();
+  try {
+    await supabase.auth.signOut({ scope: 'local' });
+    await new QueryClient().clear();
+    localStorage.clear();
+    sessionStorage.clear();
+  } catch (error) {
+    console.error('Error clearing auth state:', error);
+  }
 };
 
 export const verifyMember = async (memberNumber: string) => {
@@ -44,6 +49,9 @@ export const handleSignInError = async (error: any, email: string, password: str
     const { error: retryError } = await supabase.auth.signInWithPassword({
       email,
       password,
+      options: {
+        redirectTo: window.location.origin
+      }
     });
     
     if (retryError) {

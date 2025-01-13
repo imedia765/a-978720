@@ -22,6 +22,10 @@ export const useLoginForm = () => {
       const isMobile = window.innerWidth <= 768;
       console.log('Starting login process on device type:', isMobile ? 'mobile' : 'desktop');
 
+      // Clear any existing sessions first
+      await clearAuthState();
+      console.log('Cleared existing auth state');
+
       const member = await verifyMember(memberNumber);
       const { email, password } = getAuthCredentials(memberNumber);
       
@@ -30,6 +34,9 @@ export const useLoginForm = () => {
       const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
+        options: {
+          redirectTo: window.location.origin
+        }
       });
 
       if (signInError && signInError.message.includes('Invalid login credentials')) {
@@ -41,7 +48,8 @@ export const useLoginForm = () => {
           options: {
             data: {
               member_number: memberNumber,
-            }
+            },
+            redirectTo: window.location.origin
           }
         });
 
@@ -59,6 +67,9 @@ export const useLoginForm = () => {
           const { data: finalSignInData, error: finalSignInError } = await supabase.auth.signInWithPassword({
             email,
             password,
+            options: {
+              redirectTo: window.location.origin
+            }
           });
 
           if (finalSignInError) {
@@ -74,10 +85,7 @@ export const useLoginForm = () => {
         await handleSignInError(signInError, email, password);
       }
 
-      await queryClient.cancelQueries();
-      await queryClient.clear();
-
-      console.log('Verifying session...');
+      // Verify session is established
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
       if (sessionError) {
@@ -91,6 +99,10 @@ export const useLoginForm = () => {
       }
 
       console.log('Session established successfully');
+      
+      // Clear queries and invalidate cache
+      await queryClient.cancelQueries();
+      await queryClient.clear();
       await queryClient.invalidateQueries();
 
       toast({
@@ -103,7 +115,7 @@ export const useLoginForm = () => {
 
       if (isMobile) {
         // For mobile, use window.location.replace to ensure a clean redirect
-        window.location.replace('/');
+        window.location.replace(window.location.origin + '/');
       } else {
         navigate('/', { replace: true });
       }
@@ -120,6 +132,8 @@ export const useLoginForm = () => {
         errorMessage = 'Please verify your email before logging in';
       } else if (error.message.includes('refresh_token_not_found')) {
         errorMessage = 'Session expired. Please try logging in again.';
+      } else if (error.message.includes('Failed to fetch')) {
+        errorMessage = 'Network error. Please check your connection and try again.';
       }
       
       toast({
