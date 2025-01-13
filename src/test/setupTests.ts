@@ -1,9 +1,9 @@
 import '@testing-library/jest-dom';
 import { cleanup, render } from '@testing-library/react';
 import { expect, afterEach, vi } from 'vitest';
-import { JSDOM } from 'jsdom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactNode } from 'react';
+import { JSDOM } from 'jsdom';
 
 const dom = new JSDOM('<!doctype html><html><body></body></html>', {
   url: 'http://localhost:3000',
@@ -11,32 +11,35 @@ const dom = new JSDOM('<!doctype html><html><body></body></html>', {
   resources: 'usable'
 });
 
-// Correctly type the window object
 global.window = dom.window as unknown as Window & typeof globalThis;
 global.document = dom.window.document;
 global.navigator = {
   userAgent: 'node.js',
 } as Navigator;
 
-// Mock localStorage
-global.localStorage = {
-  getItem: vi.fn(),
-  setItem: vi.fn(),
-  removeItem: vi.fn(),
-  clear: vi.fn(),
-  length: 0,
-  key: vi.fn(),
-} as unknown as Storage;
+// Mock localStorage and sessionStorage
+const createStorageMock = () => {
+  const storage: { [key: string]: string } = {};
+  return {
+    getItem: vi.fn((key: string) => storage[key] || null),
+    setItem: vi.fn((key: string, value: string) => {
+      storage[key] = value.toString();
+    }),
+    removeItem: vi.fn((key: string) => {
+      delete storage[key];
+    }),
+    clear: vi.fn(() => {
+      Object.keys(storage).forEach(key => {
+        delete storage[key];
+      });
+    }),
+    length: 0,
+    key: vi.fn((index: number) => Object.keys(storage)[index] || null),
+  };
+};
 
-// Mock sessionStorage
-global.sessionStorage = {
-  getItem: vi.fn(),
-  setItem: vi.fn(),
-  removeItem: vi.fn(),
-  clear: vi.fn(),
-  length: 0,
-  key: vi.fn(),
-} as unknown as Storage;
+global.localStorage = createStorageMock();
+global.sessionStorage = createStorageMock();
 
 // Mock window.matchMedia
 global.window.matchMedia = vi.fn().mockImplementation(query => ({
@@ -51,7 +54,7 @@ global.window.matchMedia = vi.fn().mockImplementation(query => ({
 }));
 
 // Create a wrapper with providers for testing
-export const renderWithProviders = (ui: ReactNode) => {
+export const createWrapper = () => {
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: {
@@ -59,10 +62,10 @@ export const renderWithProviders = (ui: ReactNode) => {
       },
     },
   });
-
-  return render(
+  
+  return ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={queryClient}>
-      {ui}
+      {children}
     </QueryClientProvider>
   );
 };
