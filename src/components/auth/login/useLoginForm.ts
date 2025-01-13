@@ -98,8 +98,12 @@ export const useLoginForm = () => {
         description: "Welcome back!",
       });
 
+      // Reset loading state before redirect
+      setLoading(false);
+
       if (isMobile) {
-        window.location.href = '/';
+        // For mobile, use window.location.replace to ensure a clean redirect
+        window.location.replace('/');
       } else {
         navigate('/', { replace: true });
       }
@@ -123,7 +127,6 @@ export const useLoginForm = () => {
         description: errorMessage,
         variant: "destructive",
       });
-    } finally {
       setLoading(false);
     }
   };
