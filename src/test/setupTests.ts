@@ -26,7 +26,17 @@ global.localStorage = {
   clear: vi.fn(),
   length: 0,
   key: vi.fn(),
-};
+} as unknown as Storage;
+
+// Mock sessionStorage
+global.sessionStorage = {
+  getItem: vi.fn(),
+  setItem: vi.fn(),
+  removeItem: vi.fn(),
+  clear: vi.fn(),
+  length: 0,
+  key: vi.fn(),
+} as unknown as Storage;
 
 // Mock window.matchMedia
 global.window.matchMedia = vi.fn().mockImplementation(query => ({
@@ -62,4 +72,5 @@ afterEach(() => {
   cleanup();
   vi.clearAllMocks();
   localStorage.clear();
+  sessionStorage.clear();
 });
