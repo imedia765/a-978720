@@ -30,12 +30,14 @@ export const useLoginForm = () => {
       const { email, password } = getAuthCredentials(memberNumber);
       
       console.log('Attempting sign in with:', { email });
+
+      const redirectUrl = window.location.origin;
       
       const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
         options: {
-          redirectTo: window.location.origin
+          redirectTo: redirectUrl
         }
       });
 
@@ -49,7 +51,7 @@ export const useLoginForm = () => {
             data: {
               member_number: memberNumber,
             },
-            redirectTo: window.location.origin
+            redirectTo: redirectUrl
           }
         });
 
@@ -68,7 +70,7 @@ export const useLoginForm = () => {
             email,
             password,
             options: {
-              redirectTo: window.location.origin
+              redirectTo: redirectUrl
             }
           });
 
@@ -82,19 +84,40 @@ export const useLoginForm = () => {
           }
         }
       } else if (signInError) {
+        if (signInError.message.includes('Failed to fetch')) {
+          console.error('Network error during sign in:', signInError);
+          throw new Error('Network connection error. Please check your connection and try again.');
+        }
         await handleSignInError(signInError, email, password);
       }
 
-      // Verify session is established
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError) {
-        console.error('Session verification error:', sessionError);
-        throw sessionError;
+      // Verify session is established with retries
+      let session = null;
+      let retryCount = 0;
+      const maxRetries = 3;
+
+      while (!session && retryCount < maxRetries) {
+        const { data: { session: currentSession }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error(`Session verification error (attempt ${retryCount + 1}):`, sessionError);
+          retryCount++;
+          if (retryCount === maxRetries) throw sessionError;
+          await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second before retry
+          continue;
+        }
+
+        if (currentSession) {
+          session = currentSession;
+          break;
+        }
+
+        retryCount++;
+        await new Promise(resolve => setTimeout(resolve, 1000));
       }
 
       if (!session) {
-        console.error('No session established');
+        console.error('Failed to establish session after retries');
         throw new Error('Failed to establish session');
       }
 
@@ -115,7 +138,7 @@ export const useLoginForm = () => {
 
       if (isMobile) {
         // For mobile, use window.location.replace to ensure a clean redirect
-        window.location.replace(window.location.origin + '/');
+        window.location.replace(redirectUrl);
       } else {
         navigate('/', { replace: true });
       }

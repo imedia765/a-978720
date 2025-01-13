@@ -4,12 +4,26 @@ import { QueryClient } from '@tanstack/react-query';
 export const clearAuthState = async () => {
   console.log('Clearing existing session...');
   try {
+    // Clear any existing sessions with local scope
     await supabase.auth.signOut({ scope: 'local' });
+    
+    // Clear query cache
     await new QueryClient().clear();
+    
+    // Clear storage
     localStorage.clear();
     sessionStorage.clear();
+    
+    // Remove any auth-specific cookies
+    document.cookie.split(";").forEach(c => {
+      document.cookie = c.replace(/^ +/, "")
+        .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+    });
+    
+    console.log('Auth state cleared successfully');
   } catch (error) {
     console.error('Error clearing auth state:', error);
+    throw error;
   }
 };
 
@@ -41,6 +55,7 @@ export const getAuthCredentials = (memberNumber: string) => ({
 
 export const handleSignInError = async (error: any, email: string, password: string) => {
   console.error('Sign in error:', error);
+  
   if (error.message.includes('refresh_token_not_found')) {
     console.log('Refresh token error detected, clearing session and retrying...');
     await clearAuthState();
